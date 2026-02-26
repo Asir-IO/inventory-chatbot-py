@@ -8,7 +8,7 @@ This currently is a simple (Text-to-SQL) API that can answer questions about inv
 ## Operation Diagram
 This is a diagram that shows how the API works.
 
-![](assets/operation_diagram.svg)
+![](assets/operation_diagram.png)
 
 ---
 ## API Reference
