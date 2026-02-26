@@ -1,7 +1,7 @@
 ## What is this
 This currently is a simple (Text-to-SQL) API that can answer questions about inventory and return the SQL query that would be used to get the answer. 
 
-> [!NOTE] The GUI
+> [!NOTE]
 > I vibecoded a frontend page for the chatbot and it seems to work.
 
 ---
