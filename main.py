@@ -1,31 +1,42 @@
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from models import ChatRequest, ChatResponse
-from llm_service import process_chat_request
 import os
+import dotenv
+from agent.graph import app
+from langchain_core.messages import HumanMessage
 
-app = FastAPI(title="Inventory Chat API")
+# Load environment variables (API keys)
+dotenv.load_dotenv()
 
-@app.get("/", response_class=HTMLResponse)
-async def get_frontend():
-    with open("index.html", "r", encoding="utf-8") as f:
-        return f.read()
+def main():
+    print("\n" + "="*50)
+    print("Inventory Chatbot Initialized.")
+    print("Type 'quit', 'exit', or 'q' to stop.")
+    print("="*50 + "\n")
 
-@app.post("/api/chat", response_model=ChatResponse)
-async def chat_endpoint(request: ChatRequest):
-    result = await process_chat_request(request.message, request.context)
-    
-    return ChatResponse(
-        natural_language_answer=result["natural_language_answer"],
-        sql_query=result["sql_query"],
-        token_usage=result["token_usage"],
-        latency_ms=result["latency_ms"],
-        provider=result["provider"],
-        model=result["model"],
-        status=result["status"]
-    )
+    while True:
+        try:
+            user_input = input("You: ")
+            
+            if user_input.lower() in ['quit', 'exit', 'q']:
+                print("Bot: Goodbye!")
+                break
+                
+            if not user_input.strip():
+                continue
+                
+            initial_state = {
+                "question": user_input,
+                "messages": [] 
+            }
+            # enter graph
+            result_state = app.invoke(initial_state)  
+            response = result_state["messages"][-1].content
+            print(f"Bot: {response}\n")
+            
+        except KeyboardInterrupt:
+            print("\nBot: Goodbye!")
+            break
+        except Exception as e:
+            print(f"\n[System Error]: An unexpected error occurred: {e}\n")
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+if __name__ == '__main__':
+    main()
