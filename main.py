@@ -29,6 +29,10 @@ def main():
             }
             # enter graph
             result_state = app.invoke(initial_state)  
+            # --- NEW: PRINTING THE MESSAGES OBJECT ---
+            print("\n--- DEBUG: RAW MESSAGES OBJECT ---")
+            print(result_state["messages"])
+            print("----------------------------------\n")
             response = result_state["messages"][-1].content
             print(f"Bot: {response}\n")
             

@@ -1,78 +1,51 @@
-## What is this
-This currently is a simple (Text-to-SQL) API that can answer questions about inventory and return the SQL query that would be used to get the answer. 
+## What is This
+This is an inventory chatbot that translates natural language questions into executable database queries, and then into  a natural language response.
 
-> [!NOTE]
-> I vibecoded a frontend page for the chatbot and it seems to work.
+Given a local database, it can accurately answer operational questions about assets, vendors, stock, and much more.
 
 ---
 ## Operation Diagram
-This is a diagram that shows how the API works.
-
+Below is the system architecture showing how the LangGraph state machine routes intent, generates SQL, executes queries, and self-corrects errors.
 ![](assets/operation_diagram.png)
 
 ---
-## System Prompt
+## Dependency Requirements
+This project requires Python 3.9+ and uses several external libraries. All dependencies are locked in the requirements.txt file.
+
+Key dependencies include:
+- langchain & langchain-openai
+- langgraph
+- python-dotenv
+- sqlite3 (Built into Python)
+
+## Setup Instructions
+### 1. Set Environment Variables
+This project requires an OpenAI API key to run the LLM routing and generation nodes.
+
+1. Create a file named `.env` in the root directory of the project.
+
+2. Add your API key exactly like this:
 ```
-# ROLE
-You are an AI assistant for a business/inventory database.
+OPENAI_API_KEY=your_api_key_here
+```
 
-# OBJECTIVE
-Your goal is to accurately translate user questions into SQL queries and provide a natural language summary.
+### 2. Install Dependencies
+Open your terminal, navigate to the project folder, and run:
 
-# INSTRUCTION
-Given the user's question, you must provide:
-1. A natural language answer to the question.
-2. The exact SQL Server query that would be run to get the answer.
+```py
+pip install -r requirements.txt
+```
+### 3. Initialize Database
+Before running the bot, you must provide your SQLite database.
+replace the `inventory_chatbot.db` file with your own database
 
-# MUST
-- Output valid JSON with strictly two keys: "natural_language_answer" (string) and "sql_query" (string).
-- Ensure the SQL is completely valid Microsoft SQL Server T-SQL syntax.
-
-# MUSTN'T
-- Do not include markdown formatting or backticks around your JSON response.
-- Do not include 'Disposed' assets in counts or lists unless explicitly requested.
-
-# NOTES
-Examples of expected queries based on user questions:
-- User: 'How many assets do I have?'
-  SQL: SELECT COUNT(*) AS AssetCount FROM Assets WHERE Status <> 'Disposed';
-- User: 'How many assets by site?'
-  SQL: SELECT s.SiteName, COUNT(*) AS AssetCount FROM Assets a JOIN Sites s ON s.SiteId = a.SiteId WHERE a.Status <> 'Disposed' GROUP BY s.SiteName ORDER BY AssetCount DESC;
-
-Here is the SQL Server DDL Data Schema:
-{schema_ddl}
+---
+## Running the Bot/App
+To run the terminal-basedbot, execute the following command:
+```py
+python main.py
 ```
 
 ---
-## API Reference
+built by Asser =)
 
-### `POST /api/chat`
-
-**Request Body (`application/json`)**
-```json
-{
-  "session_id": "user_123",
-  "message": "How many assets do we have by site?",
-  "context": {}
-}
-```
-
-**Response**
-```json
-{
-  "natural_language_answer": "Here is the asset count by site.",
-  "sql_query": "SELECT s.SiteName, COUNT(*) AS AssetCount FROM Assets a JOIN Sites s ON s.SiteId = a.SiteId WHERE a.Status <> 'Disposed' GROUP BY s.SiteName ORDER BY AssetCount DESC;",
-  "token_usage": {
-    "prompt_tokens": 850,
-    "completion_tokens": 65,
-    "total_tokens": 915
-  },
-  "latency_ms": 1405,
-  "provider": "openai",
-  "model": "gpt-4o-mini",
-  "status": "ok"
-}
-```
-
----
-=)
