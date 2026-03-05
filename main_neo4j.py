@@ -1,6 +1,6 @@
 import os
 import dotenv
-from agent.graph import app
+from neo4j_agent.graph import app
 from langchain_core.messages import HumanMessage
 
 # Load environment variables (API keys)
@@ -9,7 +9,7 @@ dotenv.load_dotenv()
 def main():
     print("\n" + "="*50)
     print("Inventory Chatbot Initialized.")
-    print("Type 'quit', 'exit', or 'q' to stop.")
+    print("Type: 'quit', 'exit', or 'q' to stop.")
     print("="*50 + "\n")
 
     while True:
@@ -28,11 +28,8 @@ def main():
                 "messages": [] 
             }
             # enter graph
-            result_state = app.invoke(initial_state)  
-            # --- NEW: PRINTING THE MESSAGES OBJECT ---
-            print("\n--- DEBUG: RAW MESSAGES OBJECT ---")
-            print(result_state["messages"])
-            print("----------------------------------\n")
+            config = {"configurable": {"thread_id": "user-session-1"}} # the checkpinter will remember this throughout invocations
+            result_state = app.invoke(initial_state, config=config)
             response = result_state["messages"][-1].content
             print(f"Bot: {response}\n")
             
