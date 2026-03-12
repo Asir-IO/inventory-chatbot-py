@@ -18,8 +18,8 @@ def should_continue(state: AgentState):
         if revisions >= 3:
             print(f"\nMax revision attempts ({revisions}) reached. Giving up.")
             return "responder" 
-        return "corrector"
-    return "responder"
+        return "correct"
+    return "respond"
 
 workflow = StateGraph(AgentState)
 workflow.add_node('generator', sql_generator_node)
@@ -36,8 +36,8 @@ workflow.add_conditional_edges(START, classify_intent, {
 workflow.add_edge('chitchat', END)
 workflow.add_edge('generator', 'executor')
 workflow.add_conditional_edges('executor', should_continue, {
-    'corrector': 'corrector', 
-    'responder': 'responder'
+    'correct': 'corrector', 
+    'respond': 'responder'
 })
 workflow.add_edge('corrector', 'executor')
 workflow.add_edge('responder', END)

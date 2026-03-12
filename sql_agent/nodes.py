@@ -33,6 +33,7 @@ def sql_generator_node(state: AgentState):
 
 def sql_executor_node(state: AgentState):
     sql = state["sql_query"]
+    sql_upper = sql.strip().upper()
 
     try:
         # DB connection
@@ -40,9 +41,17 @@ def sql_executor_node(state: AgentState):
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             cursor.execute(sql)
-            results = [dict(row) for row in cursor.fetchall()]
 
-            return {"sql_result": str(results)[:2000], "error": None}
+            if sql_upper.startswith(("INSERT", "UPDATE", "DELETE")):
+                conn.commit()
+                sql_result = (
+                    f"WRITE_SUCCESS: {cursor.rowcount} row(s) affected."
+                )
+            else:
+                results = [dict(row) for row in cursor.fetchall()]
+                sql_result = str(results)[:2000]
+
+            return {"sql_result": sql_result, "error": None}
     except Exception as e:
         return {"error": f"{type(e).__name__}: {e}"}
 

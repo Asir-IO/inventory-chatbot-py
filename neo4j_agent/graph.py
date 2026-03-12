@@ -1,43 +1,53 @@
-from email import generator
-
 from langgraph.graph import StateGraph, END, START
 from langgraph.checkpoint.memory import MemorySaver
 from .state import AgentState
-from .nodes import classifier_node, cypher_generator_node, cypher_executor_node, synthesis_node
+from .nodes import classifier_node, cypher_generator_node, chitchat_node, cypher_executor_node, cypher_corrector_node, synthesis_node
 
+def check_chitchat(state: AgentState):
+    intent = state.get("intent", "").lower().strip()
+    
+    if intent == "chitchat":
+        return "chitchat"
+    return "else"
 
 def should_continue(state: AgentState):
+    """Decides whether to self-correct or synthesize response."""
     error = state.get("error")
     revisions = state.get("revision_count", 0)
     
     if error:
         if revisions >= 3:
-            print(f"\nMax revision attempts ({revisions}) reached. Proceeding with error message.")
-            return "synthesis"
-        print(f"\nError detected. Retrying... (attempt {revisions}/3)")
-        return "generator"
-    
-    return "synthesis"
+            print(f"\nMax revision attempts ({revisions}) reached. Giving up.")
+            return "synthesize"
+        return "correct"
+    return "synthesize"
 
-
-# Initialize workflow with state schema
 workflow = StateGraph(AgentState)
 
-# Add nodes
+# Nodes
 workflow.add_node('classifier', classifier_node)
+workflow.add_node('chitchat', chitchat_node)
 workflow.add_node('generator', cypher_generator_node)
 workflow.add_node('executor', cypher_executor_node)
+workflow.add_node('corrector', cypher_corrector_node)
 workflow.add_node('synthesis', synthesis_node)
 
+# Edges
 workflow.add_edge(START, 'classifier')
-workflow.add_edge('classifier', 'generator')
-workflow.add_edge('generator', 'executor')
-
-workflow.add_conditional_edges('executor', should_continue, {
-    'generator': 'generator',  # Retry on error
-    'synthesis': 'synthesis'    # Success or max retries reached
+workflow.add_conditional_edges('classifier', check_chitchat, {
+    'chitchat': 'chitchat',
+    'else': 'generator'
 })
 
+workflow.add_edge('generator', 'executor')
+workflow.add_edge('chitchat', END)
+
+workflow.add_conditional_edges('executor', should_continue, {
+    'correct': 'corrector',
+    'synthesize': 'synthesis' 
+})
+
+workflow.add_edge('corrector', 'executor')
 workflow.add_edge('synthesis', END)
 
 memory = MemorySaver()

@@ -51,7 +51,7 @@ General conversation, greetings, or unrelated to data operations
 CYPHER_GENERATION_PROMPT = """
 You are an expert Neo4j Cypher query generator for an Anime Knowledge Graph.
 
-## User Intent: {intent}
+## User Intent {intent}
 
 Based on the conversation history and the current request, generate a valid Cypher query.
 
